@@ -20,7 +20,6 @@ import (
 	awsClient "github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/iam"
-	"github.com/fullsailor/pkcs7"
 	"github.com/hashicorp/errwrap"
 	cleanhttp "github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-retryablehttp"
@@ -326,7 +325,7 @@ func (b *backend) parseIdentityDocument(ctx context.Context, s logical.Storage, 
 	}
 
 	// Parse the signature from asn1 format into a struct
-	pkcs7Data, err := pkcs7.Parse(pkcs7BER.Bytes)
+	pkcs7Data, err := parse(pkcs7BER.Bytes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse the BER encoded PKCS#7 signature: %w", err)
 	}
@@ -348,7 +347,7 @@ func (b *backend) parseIdentityDocument(ctx context.Context, s logical.Storage, 
 
 	// Verify extracts the authenticated attributes in the PKCS#7 signature, and verifies
 	// the authenticity of the content using 'dsa.PublicKey' embedded in the public certificate.
-	if pkcs7Data.Verify() != nil {
+	if pkcs7Data.verify() != nil {
 		return nil, fmt.Errorf("failed to verify the signature")
 	}
 
